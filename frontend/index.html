@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopKit – Full‑Stack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ---------- Reset & Base ---------- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f6f8fc; color: #1a1a2e; line-height: 1.6; }
+    .app { max-width: 1280px; margin: 0 auto; padding: 20px 24px 40px; }
+    .hidden { display: none !important; }
+
+    /* ---------- Header ---------- */
+    .app-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0 20px; border-bottom: 2px solid #e2e8f0; margin-bottom: 28px; }
+    .app-header .logo { font-size: 1.6rem; font-weight: 700; background: linear-gradient(135deg, #1a1a2e, #4a6cf7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .cart-badge { display: inline-flex; align-items: center; gap: 6px; background: #fff; padding: 8px 16px; border-radius: 40px; border: 1px solid #e2e8f0; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
+    .cart-badge:hover { border-color: #4a6cf7; background: #f0f4ff; }
+    .cart-badge .count { background: #4a6cf7; color: #fff; border-radius: 20px; padding: 0 10px; font-size: 0.75rem; line-height: 1.8; min-width: 24px; text-align: center; }
+
+    /* ---------- Controls ---------- */
+    .controls { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 28px; align-items: center; }
+    .search-box { flex: 1 1 260px; display: flex; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; background: #fff; }
+    .search-box input { flex: 1; border: none; padding: 10px 16px; font-size: 0.95rem; font-family: inherit; outline: none; background: transparent; }
+    .search-box button { background: #4a6cf7; border: none; color: #fff; padding: 0 18px; font-weight: 600; cursor: pointer; }
+    .filter-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .filter-btn { background: #fff; border: 1px solid #e2e8f0; border-radius: 30px; padding: 6px 16px; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: 0.2s; }
+    .filter-btn.active { background: #4a6cf7; color: #fff; border-color: #4a6cf7; }
+    .filter-btn:hover:not(.active) { border-color: #4a6cf7; background: #f0f4ff; }
+
+    /* ---------- Product Grid ---------- */
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; margin-bottom: 40px; }
+    .product-card .card__image { height: 180px; object-fit: contain; background: #f8fafc; padding: 12px; }
+    .product-card .card__title { font-size: 0.95rem; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .product-card .price { font-weight: 700; font-size: 1.1rem; margin: 4px 0 10px; }
+    .product-card .card__footer { display: flex; gap: 8px; border-top: none; padding-top: 0; flex-wrap: wrap; }
+
+    /* ---------- Pagination ---------- */
+    .pagination { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
+    .pagination button { padding: 8px 16px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; cursor: pointer; font-weight: 500; }
+    .pagination button.active { background: #4a6cf7; color: #fff; border-color: #4a6cf7; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ---------- Cart Modal ---------- */
+    .cart-item { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid #edf2f7; align-items: center; }
+    .cart-item img { width: 56px; height: 56px; object-fit: contain; background: #f8fafc; border-radius: 8px; padding: 4px; }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-info .name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cart-item-qty { display: flex; align-items: center; gap: 6px; }
+    .cart-item-qty button { width: 28px; height: 28px; border-radius: 6px; border: 1px solid #e2e8f0; background: #fff; font-weight: 600; cursor: pointer; }
+    .cart-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem; padding-top: 12px; border-top: 2px solid #e2e8f0; margin-top: 8px; }
+
+    /* ---------- Admin Panel ---------- */
+    .admin-panel { margin-top: 20px; }
+    .admin-panel table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .admin-panel th, .admin-panel td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #edf2f7; }
+    .admin-panel th { background: #f8fafc; font-weight: 600; }
+    .admin-panel .actions { display: flex; gap: 6px; }
+
+    /* ---------- Modals (overlay) ---------- */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: 0.3s; padding: 20px; }
+    .modal-overlay--open { opacity: 1; visibility: visible; }
+    .modal { background: #fff; border-radius: 20px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px; box-shadow: 0 24px 64px rgba(0,0,0,0.2); transform: scale(0.94) translateY(12px); transition: 0.3s; }
+    .modal-overlay--open .modal { transform: scale(1) translateY(0); }
+    .modal__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+    .modal__title { font-size: 1.35rem; font-weight: 700; }
+    .modal__close { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #94a3b8; }
+    .modal__body { color: #475569; margin: 12px 0 24px; }
+    .modal__footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
+    /* ---------- Toast ---------- */
+    .toast-container { position: fixed; z-index: 9999; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; max-width: 380px; width: 100%; }
+    .toast { pointer-events: auto; background: #fff; border-radius: 12px; padding: 14px 18px; box-shadow: 0 8px 28px rgba(0,0,0,0.12); border-left: 5px solid #4a6cf7; display: flex; align-items: center; gap: 12px; animation: toastIn 0.35s ease forwards; }
+    .toast--success { border-left-color: #22c55e; }
+    .toast--error { border-left-color: #ef4444; }
+    .toast--warning { border-left-color: #f59e0b; }
+    .toast__icon { font-size: 1.3rem; }
+    .toast__message { flex: 1; font-size: 0.9rem; font-weight: 500; }
+    .toast__dismiss { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #94a3b8; }
+    .toast--exiting { animation: toastOut 0.3s ease forwards; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(40px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+    @keyframes toastOut { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(40px) scale(0.95); } }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 600px) {
+      .app-header { flex-direction: column; align-items: stretch; }
+      .header-actions { justify-content: space-between; }
+      .controls { flex-direction: column; align-items: stretch; }
+      .filter-group { justify-content: center; }
+      .product-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app"></div>
+
+  <script>
+    // ================================================================
+    // 1. REUSABLE UI KIT (Button, Card, Modal, Toast)
+    // ================================================================
+
+    function createButton({ text, variant = 'primary', size = 'md', onClick = null, disabled = false }) {
+      const btn = document.createElement('button');
+      btn.className = `btn btn--${variant} btn--${size}`;
+      btn.textContent = text;
+      if (disabled) btn.disabled = true;
+      if (onClick) btn.addEventListener('click', onClick);
+      // basic styles inline for demo
+      Object.assign(btn.style, {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '6px',
+        fontFamily: 'inherit',
+        fontWeight: 600,
+        fontSize: size === 'sm' ? '0.75rem' : '0.875rem',
+        padding: size === 'sm' ? '6px 14px' : '10px 20px',
+        borderRadius: '8px',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        minHeight: size === 'sm' ? '34px' : '44px',
+        background: variant === 'primary' ? '#4a6cf7' : variant === 'secondary' ? '#e2e8f0' : '#4a6cf7',
+        color: variant === 'primary' ? '#fff' : '#1a1a2e',
+      });
+      if (variant === 'secondary') btn.style.background = '#e2e8f0';
+      if (variant === 'danger') { btn.style.background = '#ef4444'; btn.style.color = '#fff'; }
+      if (variant === 'success') { btn.style.background = '#22c55e'; btn.style.color = '#fff'; }
+      return btn;
+    }
+
+    function createCard({ title, content, image, footer, className = '' }) {
+      const card = document.createElement('div');
+      card.className = `card ${className}`;
+      Object.assign(card.style, { background: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', height: '100%', display: 'flex', flexDirection: 'column' });
+      if (image) {
+        const img = document.createElement('img');
+        img.src = image;
+        img.alt = title;
+        Object.assign(img.style, { width: '100%', height: '180px', objectFit: 'contain', background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '12px' });
+        card.appendChild(img);
+      }
+      const h3 = document.createElement('h3');
+      h3.textContent = title;
+      Object.assign(h3.style, { fontSize: '1rem', fontWeight: 600, marginBottom: '4px' });
+      card.appendChild(h3);
+      const p = document.createElement('div');
+      p.textContent = content;
+      Object.assign(p.style, { fontSize: '0.85rem', color: '#475569', flex: 1, marginBottom: '8px' });
+      card.appendChild(p);
+      if (footer) {
+        const f = document.createElement('div');
+        f.className = 'card__footer';
+        Object.assign(f.style, { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 'auto' });
+        if (typeof footer === 'string') f.textContent = footer;
+        else f.appendChild(footer);
+        card.appendChild(f);
+      }
+      return card;
+    }
+
+    // Modal (simple)
+    let modalStack = [];
+    function createModal({ title, content, footer, open = false, onClose }) {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:0.3s;padding:20px;';
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.style.cssText = 'background:#fff;border-radius:20px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:0 24px 64px rgba(0,0,0,0.2);transform:scale(0.94) translateY(12px);transition:0.3s;';
+      const header = document.createElement('div');
+      header.className = 'modal__header';
+      header.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:8px;';
+      const titleEl = document.createElement('h2');
+      titleEl.className = 'modal__title';
+      titleEl.textContent = title;
+      titleEl.style.cssText = 'font-size:1.35rem;font-weight:700;margin:0;';
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'modal__close';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.style.cssText = 'background:none;border:none;font-size:1.6rem;cursor:pointer;color:#94a3b8;';
+      closeBtn.onclick = () => closeModal();
+      header.appendChild(titleEl);
+      header.appendChild(closeBtn);
+      const body = document.createElement('div');
+      body.className = 'modal__body';
+      body.style.cssText = 'color:#475569;margin:12px 0 24px;';
+      if (typeof content === 'string') body.textContent = content;
+      else body.appendChild(content);
+      const footerEl = document.createElement('div');
+      footerEl.className = 'modal__footer';
+      footerEl.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;';
+      if (footer) {
+        if (typeof footer === 'string') footerEl.textContent = footer;
+        else footerEl.appendChild(footer);
+      }
+      modal.appendChild(header);
+      modal.appendChild(body);
+      modal.appendChild(footerEl);
+      overlay.appendChild(modal);
+
+      function openModal() {
+        if (overlay.classList.contains('modal-overlay--open')) return;
+        modalStack.push(overlay);
+        overlay.classList.add('modal-overlay--open');
+        overlay.style.opacity = '1';
+        overlay.style.visibility = 'visible';
+        modal.style.transform = 'scale(1) translateY(0)';
+        document.body.style.overflow = 'hidden';
+        if (onClose) onClose(true);
+      }
+
+      function closeModal() {
+        if (!overlay.classList.contains('modal-overlay--open')) return;
+        modalStack = modalStack.filter(o => o !== overlay);
+        overlay.classList.remove('modal-overlay--open');
+        overlay.style.opacity = '0';
+        overlay.style.visibility = 'hidden';
+        modal.style.transform = 'scale(0.94) translateY(12px)';
+        if (modalStack.length === 0) document.body.style.overflow = '';
+        if (onClose) onClose(false);
+      }
+
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modalStack.length > 0) {
+          const top = modalStack[modalStack.length - 1];
+          if (top._close) top._close();
+        }
+      });
+      overlay._close = closeModal;
+      overlay.open = openModal;
+      overlay.close = closeModal;
+
+      if (open) setTimeout(openModal, 20);
+      return overlay;
+    }
+
+    // Toast
+    let toastContainer = null;
+    function createToast({ message, variant = 'info', duration = 3500 }) {
+      if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
+      }
+      const toast = document.createElement('div');
+      toast.className = `toast toast--${variant}`;
+      toast.style.cssText = 'pointer-events:auto;background:#fff;border-radius:12px;padding:14px 18px;box-shadow:0 8px 28px rgba(0,0,0,0.12);border-left:5px solid #4a6cf7;display:flex;align-items:center;gap:12px;animation:toastIn 0.35s ease forwards;';
+      const iconMap = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+      const icon = document.createElement('span');
+      icon.className = 'toast__icon';
+      icon.textContent = iconMap[variant] || 'ℹ️';
+      const msg = document.createElement('span');
+      msg.className = 'toast__message';
+      msg.textContent = message;
+      const dismiss = document.createElement('button');
+      dismiss.className = 'toast__dismiss';
+      dismiss.innerHTML = '&times;';
+      dismiss.style.cssText = 'background:none;border:none;font-size:1.2rem;cursor:pointer;color:#94a3b8;';
+      dismiss.onclick = () => destroyToast(toast);
+      toast.appendChild(icon);
+      toast.appendChild(msg);
+      toast.appendChild(dismiss);
+      toastContainer.appendChild(toast);
+
+      let timeoutId = null;
+      function destroyToast(el) {
+        if (!el || !el.parentNode) return;
+        el.classList.add('toast--exiting');
+        if (timeoutId) clearTimeout(timeoutId);
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
+      }
+      if (duration > 0) timeoutId = setTimeout(() => destroyToast(toast), duration);
+      toast.dismiss = () => destroyToast(toast);
+      return toast;
+    }
+
+    // ================================================================
+    // 2. APPLICATION STATE & API
+    // ================================================================
+
+    const API_BASE = 'http://localhost:5000/api';
+    let currentUser = null;
+    let token = localStorage.getItem('token');
+    let products = [];
+    let cartItems = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    let searchKeyword = '';
+    let selectedCategory = 'all';
+    let categories = [];
+
+    // ================================================================
+    // 3. RENDER FUNCTIONS
+    // ================================================================
+
+    const app = document.getElementById('app');
+
+    function renderLogin() {
+      app.innerHTML = `
+        <div style="max-width:400px;margin:60px auto;background:#fff;padding:32px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+          <h2 style="margin-bottom:20px;">Login</h2>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Email</label>
+            <input type="email" id="loginEmail" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;" />
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Password</label>
+            <input type="password" id="loginPassword" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;" />
+          </div>
+          <button id="loginBtn" class="btn btn--primary" style="width:100%;padding:12px;background:#4a6cf7;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Login</button>
+          <p style="margin-top:12px;text-align:center;">Don't have an account? <a href="#" id="showRegister">Register</a></p>
+        </div>
+      `;
+      document.getElementById('loginBtn').addEventListener('click', () => {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        login(email, password);
+      });
+      document.getElementById('showRegister').addEventListener('click', (e) => { e.preventDefault(); renderRegister(); });
+    }
+
+    function renderRegister() {
+      app.innerHTML = `
+        <div style="max-width:400px;margin:60px auto;background:#fff;padding:32px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+          <h2 style="margin-bottom:20px;">Register</h2>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Name</label>
+            <input type="text" id="regName" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;" />
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Email</label>
+            <input type="email" id="regEmail" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;" />
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Password</label>
+            <input type="password" id="regPassword" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;" />
+          </div>
+          <button id="regBtn" class="btn btn--primary" style="width:100%;padding:12px;background:#4a6cf7;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Register</button>
+          <p style="margin-top:12px;text-align:center;">Already have an account? <a href="#" id="showLogin">Login</a></p>
+        </div>
+      `;
+      document.getElementById('regBtn').addEventListener('click', () => {
+        const name = document.getElementById('regName').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        register(name, email, password);
+      });
+      document.getElementById('showLogin').addEventListener('click', (e) => { e.preventDefault(); renderLogin(); });
+    }
+
+    function renderHome() {
+      if (!currentUser) { renderLogin(); return; }
+      // Build header and controls
+      let html = `
+        <header class="app-header">
+          <div class="logo">🛍️ ShopKit</div>
+          <div class="header-actions">
+            <span style="font-weight:500;">${currentUser.name}</span>
+            <button class="cart-badge" id="cartToggle">🛒 Cart <span class="count" id="cartCount">${cartItems.reduce((s,i) => s + i.quantity, 0)}</span></button>
+            ${currentUser.role === 'admin' ? '<button id="adminBtn" class="btn btn--secondary btn--sm">Admin</button>' : ''}
+            <button id="logoutBtn" class="btn btn--secondary btn--sm">Logout</button>
+          </div>
+        </header>
+        <div class="controls">
+          <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search products..." />
+            <button id="searchBtn">Search</button>
+          </div>
+          <div class="filter-group" id="filterGroup">
+            <label>Category:</label>
+            <button class="filter-btn active" data-category="all">All</button>
+          </div>
+        </div>
+        <div id="productGrid" class="product-grid"></div>
+        <div id="pagination" class="pagination"></div>
+      `;
+      app.innerHTML = html;
+
+      // Populate categories
+      const filterGroup = document.getElementById('filterGroup');
+      categories.forEach(cat => {
+        if (cat === 'all') return;
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.dataset.category = cat;
+        btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          selectedCategory = cat;
+          currentPage = 1;
+          fetchProductsAndRender();
+        });
+        filterGroup.appendChild(btn);
+      });
+
+      // Event listeners
+      document.getElementById('searchBtn').addEventListener('click', () => {
+        searchKeyword = document.getElementById('searchInput').value.trim();
+        currentPage = 1;
+        fetchProductsAndRender();
+      });
+      document.getElementById('searchInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          searchKeyword = e.target.value.trim();
+          currentPage = 1;
+          fetchProductsAndRender();
+        }
+      });
+      document.getElementById('cartToggle').addEventListener('click', renderCartModal);
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+      if (currentUser.role === 'admin') {
+        document.getElementById('adminBtn').addEventListener('click', renderAdmin);
+      }
+
+      // Fetch products
+      fetchProductsAndRender();
+    }
+
+    async function fetchProductsAndRender() {
+      try {
+        const res = await fetch(`${API_BASE}/products?page=${currentPage}&keyword=${searchKeyword}&category=${selectedCategory}`);
+        const data = await res.json();
+        products = data.products;
+        totalPages = data.pages || 1;
+        renderProducts(products);
+        renderPagination();
+        // Update categories from products (if not set)
+        if (categories.length === 0) {
+          const allCats = ['all', ...new Set(products.map(p => p.category))];
+          categories = allCats;
+        }
+      } catch (error) {
+        createToast({ message: 'Failed to fetch products', variant: 'error' });
+      }
+    }
+
+    function renderProducts(productList) {
+      const grid = document.getElementById('productGrid');
+      grid.innerHTML = '';
+      if (productList.length === 0) {
+        grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:#94a3b8;">No products found.</p>';
+        return;
+      }
+      productList.forEach(p => {
+        const footer = document.createElement('div');
+        footer.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;width:100%;';
+        const price = document.createElement('span');
+        price.className = 'price';
+        price.textContent = `$${p.price.toFixed(2)}`;
+        price.style.cssText = 'font-weight:700;font-size:1.1rem;margin:4px 0 10px;display:block;width:100%;';
+        footer.appendChild(price);
+        const addBtn = createButton({ text: 'Add to Cart', variant: 'primary', size: 'sm', onClick: (e) => { e.stopPropagation(); addToCart(p._id); } });
+        const detailBtn = createButton({ text: 'View', variant: 'secondary', size: 'sm', onClick: (e) => { e.stopPropagation(); showProductDetail(p); } });
+        footer.appendChild(addBtn);
+        footer.appendChild(detailBtn);
+
+        const card = createCard({
+          title: p.title,
+          content: p.description.length > 80 ? p.description.slice(0,80)+'...' : p.description,
+          image: p.image || 'https://via.placeholder.com/150',
+          className: 'product-card',
+          footer: footer,
+        });
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', () => showProductDetail(p));
+        grid.appendChild(card);
+      });
+    }
+
+    function renderPagination() {
+      const container = document.getElementById('pagination');
+      if (!container) return;
+      container.innerHTML = '';
+      if (totalPages <= 1) return;
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+          currentPage = i;
+          fetchProductsAndRender();
+        });
+        container.appendChild(btn);
+      }
+    }
+
+    // Product Detail Modal
+    function showProductDetail(product) {
+      const body = document.createElement('div');
+      body.innerHTML = `
+        <img src="${product.image || 'https://via.placeholder.com/300'}" style="width:100%;max-height:300px;object-fit:contain;background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:12px;" />
+        <h3>${product.title}</h3>
+        <p><strong>$${product.price.toFixed(2)}</strong></p>
+        <p style="color:#475569;">${product.description}</p>
+        <p style="font-size:0.8rem;color:#64748b;">Category: ${product.category}</p>
+      `;
+      const footer = document.createElement('div');
+      footer.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;width:100%;';
+      const closeBtn = createButton({ text: 'Close', variant: 'secondary', size: 'sm', onClick: () => modal.close() });
+      const addBtn = createButton({ text: 'Add to Cart', variant: 'primary', size: 'sm', onClick: () => { addToCart(product._id); modal.close(); } });
+      footer.appendChild(closeBtn);
+      footer.appendChild(addBtn);
+
+      const modal = createModal({
+        title: product.title,
+        content: body,
+        footer: footer,
+        open: true,
+        onClose: (open) => { if (!open) modal.remove(); }
+      });
+      document.body.appendChild(modal);
+    }
+
+    // Cart Modal
+    async function renderCartModal() {
+      await fetchCart();
+      const body = document.createElement('div');
+      if (cartItems.length === 0) {
+        body.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;">Your cart is empty.</div>';
+      } else {
+        cartItems.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'cart-item';
+          div.style.cssText = 'display:flex;gap:14px;padding:12px 0;border-bottom:1px solid #edf2f7;align-items:center;';
+          div.innerHTML = `
+            <img src="${item.product.image || 'https://via.placeholder.com/56'}" style="width:56px;height:56px;object-fit:contain;background:#f8fafc;border-radius:8px;padding:4px;" />
+            <div class="cart-item-info" style="flex:1;min-width:0;">
+              <div class="name" style="font-weight:600;font-size:0.9rem;">${item.product.title}</div>
+              <div class="price" style="font-size:0.85rem;color:#475569;">$${item.product.price.toFixed(2)}</div>
+            </div>
+            <div class="cart-item-qty" style="display:flex;align-items:center;gap:6px;">
+              <button data-id="${item.product._id}" data-delta="-1">−</button>
+              <span>${item.quantity}</span>
+              <button data-id="${item.product._id}" data-delta="1">+</button>
+            </div>
+            <button class="cart-item-remove" data-id="${item.product._id}" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#94a3b8;">&times;</button>
+          `;
+          body.appendChild(div);
+        });
+        // Event listeners
+        body.querySelectorAll('[data-delta]').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const id = btn.dataset.id;
+            const delta = parseInt(btn.dataset.delta);
+            await updateCart(id, delta);
+            await renderCartModal(); // re-render
+          });
+        });
+        body.querySelectorAll('.cart-item-remove').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const id = btn.dataset.id;
+            await removeFromCart(id);
+            await renderCartModal();
+          });
+        });
+        const total = cartItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'cart-total';
+        totalDiv.innerHTML = `<span>Total:</span><span>$${total.toFixed(2)}</span>`;
+        body.appendChild(totalDiv);
+      }
+
+      const footer = document.createElement('div');
+      footer.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;width:100%;';
+      const closeBtn = createButton({ text: 'Close', variant: 'secondary', size: 'sm', onClick: () => modal.close() });
+      const checkoutBtn = createButton({ text: 'Proceed to Checkout', variant: 'primary', size: 'sm', onClick: () => { modal.close(); renderCheckout(); } });
+      footer.appendChild(closeBtn);
+      if (cartItems.length > 0) footer.appendChild(checkoutBtn);
+
+      const modal = createModal({
+        title: 'Your Cart',
+        content: body,
+        footer: footer,
+        open: true,
+        onClose: (open) => { if (!open) modal.remove(); }
+      });
+      document.body.appendChild(modal);
+    }
+
+    // Checkout
+    function renderCheckout() {
+      if (cartItems.length === 0) {
+        createToast({ message: 'Cart is empty', variant: 'warning' });
+        return;
+      }
+      const total = cartItems.reduce((s,i) => s + i.product.price * i.quantity, 0);
+      const html = `
+        <div style="max-width:600px;margin:40px auto;background:#fff;padding:32px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+          <h2>Checkout</h2>
+          <div style="margin:16px 0;border-top:1px solid #e2e8f0;padding-top:16px;">
+            ${cartItems.map(item => `<div style="display:flex;justify-content:space-between;padding:4px 0;">${item.product.title} × ${item.quantity} <span>$${(item.product.price * item.quantity).toFixed(2)}</span></div>`).join('')}
+            <div style="font-weight:700;font-size:1.2rem;border-top:2px solid #e2e8f0;padding-top:12px;margin-top:8px;">Total: $${total.toFixed(2)}</div>
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Address</label>
+            <input type="text" id="checkoutAddress" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;" placeholder="123 Main St" />
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Payment Method</label>
+            <select id="checkoutPayment" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;">
+              <option value="mock">Mock Payment</option>
+              <option value="card">Credit Card</option>
+            </select>
+          </div>
+          <button id="placeOrderBtn" class="btn btn--primary" style="width:100%;padding:12px;background:#4a6cf7;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Place Order</button>
+          <button id="backToCartBtn" style="margin-top:10px;background:none;border:none;color:#4a6cf7;cursor:pointer;text-decoration:underline;">← Back to Cart</button>
+        </div>
+      `;
+      app.innerHTML = html;
+      document.getElementById('placeOrderBtn').addEventListener('click', placeOrder);
+      document.getElementById('backToCartBtn').addEventListener('click', renderCartModal);
+    }
+
+    // ================================================================
+    // 4. API CALLS
+    // ================================================================
+
+    async function login(email, password) {
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          token = data.token;
+          localStorage.setItem('token', token);
+          currentUser = data.user;
+          await fetchCart();
+          renderHome();
+          createToast({ message: `Welcome ${currentUser.name}!`, variant: 'success' });
+        } else {
+          createToast({ message: data.message || 'Login failed', variant: 'error' });
+        }
+      } catch (error) {
+        createToast({ message: 'Server error', variant: 'error' });
+      }
+    }
+
+    async function register(name, email, password) {
+      try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          token = data.token;
+          localStorage.setItem('token', token);
+          currentUser = data.user;
+          await fetchCart();
+          renderHome();
+          createToast({ message: 'Registration successful!', variant: 'success' });
+        } else {
+          createToast({ message: data.message || 'Registration failed', variant: 'error' });
+        }
+      } catch (error) {
+        createToast({ message: 'Server error', variant: 'error' });
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      token = null;
+      currentUser = null;
+      cartItems = [];
+      renderLogin();
+      createToast({ message: 'Logged out', variant: 'info' });
+    }
+
+    async function fetchCart() {
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_BASE}/cart`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          cartItems = data.items || [];
+          updateCartBadge();
+        }
+      } catch (error) {
+        console.error('Failed to fetch cart');
+      }
+    }
+
+    async function addToCart(productId) {
+      if (!token) { createToast({ message: 'Please login first', variant: 'warning' }); return; }
+      try {
+        const res = await fetch(`${API_BASE}/cart/add`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ productId, quantity: 1 })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          cartItems = data.items;
+          updateCartBadge();
+          createToast({ message: 'Added to cart!', variant: 'success' });
+        } else {
+          createToast({ message: data.message || 'Failed to add', variant: 'error' });
+        }
+      } catch (error) {
+        createToast({ message: 'Server error', variant: 'error' });
+      }
+    }
+
+    async function updateCart(productId, delta) {
+      const item = cartItems.find(i => i.product._id === productId);
+      if (!item) return;
+      const newQty = item.quantity + delta;
+      if (newQty <= 0) {
+        await removeFromCart(productId);
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/cart/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ productId, quantity: newQty })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          cartItems = data.items;
+          updateCartBadge();
+        }
+      } catch (error) {
+        createToast({ message: 'Update failed', variant: 'error' });
+      }
+    }
+
+    async function removeFromCart(productId) {
+      try {
+        const res = await fetch(`${API_BASE}/cart/remove/${productId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          cartItems = data.items;
+          updateCartBadge();
+        }
+      } catch (error) {
+        createToast({ message: 'Remove failed', variant: 'error' });
+      }
+    }
+
+    async function placeOrder() {
+      const address = document.getElementById('checkoutAddress').value.trim();
+      const paymentMethod = document.getElementById('checkoutPayment').value;
+      if (!address) {
+        createToast({ message: 'Please enter address', variant: 'warning' });
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/orders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ address, paymentMethod })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          createToast({ message: 'Order placed successfully!', variant: 'success' });
+          cartItems = [];
+          updateCartBadge();
+          renderHome();
+        } else {
+          createToast({ message: data.message || 'Order failed', variant: 'error' });
+        }
+      } catch (error) {
+        createToast({ message: 'Server error', variant: 'error' });
+      }
+    }
+
+    function updateCartBadge() {
+      const count = cartItems.reduce((s, i) => s + i.quantity, 0);
+      const el = document.getElementById('cartCount');
+      if (el) el.textContent = count;
+    }
+
+    // ================================================================
+    // 5. ADMIN PANEL
+    // ================================================================
+
+    async function renderAdmin() {
+      if (!currentUser || currentUser.role !== 'admin') {
+        createToast({ message: 'Access denied', variant: 'error' });
+        return;
+      }
+      // Fetch dashboard stats and product list
+      let stats = {};
+      let productsList = [];
+      try {
+        const resStats = await fetch(`${API_BASE}/orders/dashboard/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (resStats.ok) stats = await resStats.json();
+        const resProducts = await fetch(`${API_BASE}/products?limit=100`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (resProducts.ok) {
+          const data = await resProducts.json();
+          productsList = data.products || [];
+        }
+      } catch (error) {
+        createToast({ message: 'Failed to load admin data', variant: 'error' });
+      }
+
+      let html = `
+        <header class="app-header">
+          <div class="logo">🛍️ ShopKit Admin</div>
+          <div class="header-actions">
+            <button id="backHomeBtn" class="btn btn--secondary btn--sm">Back to Shop</button>
+            <button id="logoutBtn" class="btn btn--secondary btn--sm">Logout</button>
+          </div>
+        </header>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+          <div style="background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;"><strong>Users</strong><br>${stats.totalUsers || 0}</div>
+          <div style="background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;"><strong>Products</strong><br>${stats.totalProducts || 0}</div>
+          <div style="background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;"><strong>Orders</strong><br>${stats.totalOrders || 0}</div>
+        </div>
+        <h3>Recent Orders</h3>
+        <div style="background:#fff;border-radius:12px;padding:16px;border:1px solid #e2e8f0;margin-bottom:24px;">
+          ${stats.recentOrders ? stats.recentOrders.map(o => `<div style="padding:8px 0;border-bottom:1px solid #edf2f7;">Order #${o._id} - ${o.user?.name || 'User'} - $${o.totalAmount} - ${o.status}</div>`).join('') : 'No recent orders'}
+        </div>
+        <h3>Manage Products</h3>
+        <button id="addProductBtn" class="btn btn--primary btn--sm" style="margin-bottom:16px;">+ Add Product</button>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Title</th><th>Price</th><th>Category</th><th>Stock</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${productsList.map(p => `
+                <tr>
+                  <td>${p.title}</td>
+                  <td>$${p.price}</td>
+                  <td>${p.category}</td>
+                  <td>${p.stock || 0}</td>
+                  <td class="actions">
+                    <button class="editProductBtn" data-id="${p._id}" style="background:#e2e8f0;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;">Edit</button>
+                    <button class="deleteProductBtn" data-id="${p._id}" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;">Delete</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      app.innerHTML = html;
+
+      document.getElementById('backHomeBtn').addEventListener('click', renderHome);
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+
+      // Add product
+      document.getElementById('addProductBtn').addEventListener('click', () => {
+        // Simple prompt – you can improve with a modal form
+        const title = prompt('Title');
+        if (!title) return;
+        const description = prompt('Description');
+        const price = parseFloat(prompt('Price'));
+        const category = prompt('Category');
+        const image = prompt('Image URL (optional)') || '';
+        if (!title || !description || isNaN(price) || !category) {
+          createToast({ message: 'Invalid input', variant: 'error' });
+          return;
+        }
+        createProduct({ title, description, price, category, image });
+      });
+
+      // Edit and delete
+      document.querySelectorAll('.editProductBtn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const product = productsList.find(p => p._id === id);
+          if (!product) return;
+          const title = prompt('Title', product.title);
+          if (!title) return;
+          const description = prompt('Description', product.description);
+          const price = parseFloat(prompt('Price', product.price));
+          const category = prompt('Category', product.category);
+          const image = prompt('Image URL', product.image) || product.image;
+          if (!title || !description || isNaN(price) || !category) {
+            createToast({ message: 'Invalid input', variant: 'error' });
+            return;
+          }
+          await updateProduct(id, { title, description, price, category, image });
+          renderAdmin();
+        });
+      });
+
+      document.querySelectorAll('.deleteProductBtn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Delete this product?')) return;
+          const id = btn.dataset.id;
+          await deleteProduct(id);
+          renderAdmin();
+        });
+      });
+    }
+
+    async function createProduct(data) {
+      try {
+        const res = await fetch(`${API_BASE}/products`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) {
+          createToast({ message: 'Product created', variant: 'success' });
+        } else {
+          const err = await res.json();
+          createToast({ message: err.message || 'Failed', variant: 'error' });
+        }
+      } catch (error) {
+        createToast({ message: 'Server error', variant: 'error' });
+      }
+    }
+
+    async function updateProduct(id, data) {
+      try {
+        const res = await fetch(`${API_BASE}/products/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) {
+          createToast({ message: 'Product updated', variant: 'success' });
+        } else {
+          const err = await res.json();
+          createToast({ message: err.message || 'Failed', variant: 'error' });
+        }
+      } catch (error) {
+        createToast({ message: 'Server error', variant: 'error' });
+      }
+    }
+
+    async function deleteProduct(id) {
+      try {
+        const res = await fetch(`${API_BASE}/products/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          createToast({ message: 'Product deleted', variant: 'success' });
+        } else {
+          const err = await res.json();
+          createToast({ message: err.message || 'Failed', variant: 'error' });
+        }
+      } catch (error) {
+        createToast({ message: 'Server error', variant: 'error' });
+      }
+    }
+
+    // ================================================================
+    // 6. INIT
+    // ================================================================
+
+    (async function init() {
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/auth/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            currentUser = await res.json();
+            await fetchCart();
+            renderHome();
+            return;
+          } else {
+            localStorage.removeItem('token');
+            token = null;
+          }
+        } catch (e) {
+          localStorage.removeItem('token');
+          token = null;
+        }
+      }
+      renderLogin();
+    })();
+  </script>
+</body>
+</html>
